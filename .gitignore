@@ -1,0 +1,10 @@
+# Netlify-Status (Site-ID etc.) nicht committen
+.netlify/
+# Tokens / Credentials / Umgebungsvariablen niemals ins Repo
+.env
+.env.*
+*token*
+*credential*
+*.pem
+*.key
+gh_token

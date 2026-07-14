@@ -1,0 +1,5 @@
+# Netlify-Konfiguration für den Vokabeltrainer
+# Reines statisches HTML — kein Build-Schritt, Auslieferung aus der Repo-Wurzel.
+[build]
+  publish = "."
+  command = ""

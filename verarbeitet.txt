@@ -1,0 +1,1 @@
+# Log der verarbeiteten Vokabeln (mit Datum)
