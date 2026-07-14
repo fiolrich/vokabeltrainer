@@ -1,5 +1,6 @@
 # Netlify-Konfiguration für den Vokabeltrainer
-# Reines statisches HTML — kein Build-Schritt, Auslieferung aus der Repo-Wurzel.
+# Reines statisches HTML aus der Repo-Wurzel + Serverless-Function zum Eintragen.
 [build]
   publish = "."
   command = ""
+  functions = "netlify/functions"

@@ -262,6 +262,82 @@
   .done-msg h2{font-size:22px;font-weight:900;text-transform:uppercase;margin:18px 0 8px;}
   .done-msg p{color:#000;font-weight:700;margin:0;}
 
+  /* ============ TABS / NAVIGATION ============ */
+  .tabs{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-top:14px;
+    flex-wrap:wrap;
+  }
+  .tab{
+    font-family:inherit;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    font-size:13px;
+    cursor:pointer;
+    background:#fff;
+    color:#000;
+    border:var(--border) solid #000;
+    border-radius:0;
+    padding:11px 16px;
+    box-shadow:var(--shadow);
+    transition:transform .06s ease, box-shadow .06s ease;
+  }
+  .tab:active{transform:translate(6px,6px);box-shadow:0 0 0 #000;}
+  .tab.active{background:var(--yellow);}
+
+  /* ============ VOKABEL HINZUFÜGEN ============ */
+  .add-wrap{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  .add-label{
+    font-size:14px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    color:#000;
+  }
+  .add-input{
+    width:100%;
+    font-family:inherit;
+    font-weight:700;
+    font-size:17px;
+    line-height:1.5;
+    color:#000;
+    background:#fff;
+    border:var(--border) solid #000;
+    border-radius:0;
+    box-shadow:var(--shadow-lg);
+    padding:16px;
+    resize:vertical;
+    min-height:180px;
+  }
+  .add-input:focus{outline:none;background:#fffdf0;}
+  .btn-send{background:var(--green);width:100%;}
+  .add-msg{
+    min-height:22px;
+    font-size:14px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    line-height:1.35;
+  }
+  .add-msg.ok{color:#1a7a43;}
+  .add-msg.err{color:#b4213f;}
+  .add-hint{
+    font-size:13px;
+    font-weight:700;
+    color:#000;
+    line-height:1.4;
+    margin:0;
+  }
+
   /* Landscape: kompakter */
   @media (orientation:landscape) and (max-height:520px){
     .card{min-height:52vh;}
@@ -297,11 +373,15 @@ const VOKABELN = [
 
 <header>
   <h1>Vokabeltrainer</h1>
+  <nav class="tabs">
+    <button class="tab active" id="tabPractice" type="button">Üben</button>
+    <button class="tab" id="tabAdd" type="button">Vokabel hinzufügen</button>
+  </nav>
   <div id="status">Lädt …</div>
   <div class="boxes" id="boxes"></div>
 </header>
 
-<main>
+<main id="viewPractice">
   <div class="card-wrap" id="cardWrap">
     <div class="card" id="card">
       <div class="face front">
@@ -329,7 +409,17 @@ const VOKABELN = [
   </div>
 </main>
 
-<footer>
+<main id="viewAdd" style="display:none;">
+  <div class="add-wrap">
+    <label class="add-label" for="addInput">Neue Vokabeln — eine deutsche Vokabel pro Zeile</label>
+    <textarea id="addInput" class="add-input" rows="8" placeholder="z.B.&#10;Gruseln&#10;Schiedsrichter&#10;Produktionsfirma"></textarea>
+    <button class="btn btn-send" id="btnSend" type="button">Senden</button>
+    <div class="add-msg" id="addMsg"></div>
+    <p class="add-hint">Die Wörter werden heute Abend automatisch ins Französische übersetzt und als Karten eingespielt.</p>
+  </div>
+</main>
+
+<footer id="footPractice">
   <button class="ctrl" id="btnDir">Richtung: DE → FR</button>
   <button class="ctrl" id="btnReset">Zurücksetzen</button>
 </footer>
@@ -507,6 +597,59 @@ el("btnReset").addEventListener("click", () => {
     showCard();
   }
 });
+
+/* ================= NAVIGATION: ÜBEN / HINZUFÜGEN ================= */
+function setView(v){
+  const practice = v === "practice";
+  el("viewPractice").style.display = practice ? "flex" : "none";
+  el("viewAdd").style.display      = practice ? "none" : "flex";
+  el("footPractice").style.display = practice ? "flex" : "none";
+  el("status").style.display       = practice ? "block" : "none";
+  el("boxes").style.display        = practice ? "flex" : "none";
+  el("tabPractice").classList.toggle("active", practice);
+  el("tabAdd").classList.toggle("active", !practice);
+}
+el("tabPractice").addEventListener("click", () => setView("practice"));
+el("tabAdd").addEventListener("click",      () => setView("add"));
+
+/* ================= VOKABELN SENDEN (an Netlify-Function) ================= */
+const ADD_VOCAB_URL = "/.netlify/functions/add-vocab";
+async function sendVocab(){
+  const raw = el("addInput").value;
+  const lines = raw.split("\n").map(s => s.trim()).filter(s => s.length > 0);
+  const msg = el("addMsg");
+  if(lines.length === 0){
+    msg.className = "add-msg err";
+    msg.textContent = "Bitte mindestens eine Vokabel eingeben.";
+    return;
+  }
+  el("btnSend").disabled = true;
+  msg.className = "add-msg";
+  msg.textContent = "Wird gesendet …";
+  try{
+    const res = await fetch(ADD_VOCAB_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ words: lines })
+    });
+    if(!res.ok){
+      let detail = "";
+      try{ detail = (await res.json()).error || ""; }catch(e){}
+      throw new Error("HTTP " + res.status + (detail ? " – " + detail : ""));
+    }
+    msg.className = "add-msg ok";
+    msg.textContent = (lines.length === 1)
+      ? "1 Vokabel gesendet — wird heute Abend übersetzt."
+      : lines.length + " Vokabeln gesendet — werden heute Abend übersetzt.";
+    el("addInput").value = "";
+  }catch(err){
+    msg.className = "add-msg err";
+    msg.textContent = "Fehler beim Senden: " + err.message + ". Bitte später erneut versuchen.";
+  }finally{
+    el("btnSend").disabled = false;
+  }
+}
+el("btnSend").addEventListener("click", sendVocab);
 
 /* ================= START ================= */
 buildSession();
