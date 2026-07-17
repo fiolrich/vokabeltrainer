@@ -151,6 +151,18 @@
     border:var(--border) solid #000;
     padding:8px 12px;
   }
+  .face .example{
+    margin-top:12px;
+    font-size:15px;
+    font-style:italic;
+    font-weight:600;
+    color:#000;
+    line-height:1.45;
+    max-width:92%;
+    background:var(--cyan);
+    border:var(--border) solid #000;
+    padding:8px 12px;
+  }
   .face .hint{
     position:absolute;
     bottom:14px;
@@ -360,23 +372,23 @@
 <script>
 const VOKABELN = [
   // === VOKABELN-BEGIN ===  (nicht entfernen — automatische Edits hängen HIER an)
-  { de: "Gruseln",         fr: "le frisson / avoir la chair de poule", note: "Verb: se faire peur, frissonner" },
-  { de: "Schiedsrichter",  fr: "l'arbitre (m)",                        note: "" },
-  { de: "Produktionsfirma",fr: "la société de production",            note: "auch: la maison de production" },
-  // { de: "Beispiel", fr: "exemple", note: "" },   <-- so eine weitere Karte anlegen
-    { de: "ungefähr", fr: "environ / à peu près", note: "Adverb: 'environ' meist vor Zahlen, 'à peu près' allgemein" },
-    { de: "Halbzeit", fr: "la mi-temps", note: "Sport/Zeitpunkt; Plural: les mi-temps" },
-  { de: "Ins bett gebracht", fr: "mis au lit", note: "Verb: mettre au lit / coucher (qn)" },
-  { de: "Von interesse sein", fr: "présenter un intérêt", note: "auch: être intéressant / avoir de l'intérêt" },
-  { de: "Zugeben", fr: "avouer / admettre", note: "Verb; reconnaître (etw. anerkennen)" },
-  { de: "Mittagspause", fr: "la pause déjeuner", note: "auch: la pause de midi" },
-  { de: "Erleichterung", fr: "le soulagement", note: "Verb: soulager" },
-  { de: "Gefüllt", fr: "rempli", note: "bei Speisen: farci (gefüllt/gestopft)" },
-  { de: "Beissen", fr: "mordre", note: "Verb; croquer (in etwas beißen, knabbern)" },
-  { de: "Sich wundern", fr: "s'étonner", note: "auch: être étonné, se demander" },
-  { de: "Kämpfen", fr: "se battre / lutter", note: "combattre (bekämpfen)" },
-  { de: "Leimsamen", fr: "la graine de lin", note: "vermutlich Tippfehler für Leinsamen" },
-  { de: "Samen", fr: "la graine", note: "Pflanze: la graine/la semence; biologisch: le sperme" },
+  { de: "Gruseln",         fr: "le frisson / avoir la chair de poule", note: "Verb: se faire peur, frissonner", bsp: "Ce film d'horreur m'a donné des frissons dans le dos." },
+  { de: "Schiedsrichter",  fr: "l'arbitre (m)",                        note: "", bsp: "L'arbitre a sifflé la fin du match." },
+  { de: "Produktionsfirma",fr: "la société de production",            note: "auch: la maison de production", bsp: "La société de production recherche des acteurs pour son prochain film." },
+  // { de: "Beispiel", fr: "exemple", note: "", bsp: "Voici un exemple en français." },   <-- so eine weitere Karte anlegen
+    { de: "ungefähr", fr: "environ / à peu près", note: "Adverb: 'environ' meist vor Zahlen, 'à peu près' allgemein", bsp: "Le trajet dure environ deux heures." },
+    { de: "Halbzeit", fr: "la mi-temps", note: "Sport/Zeitpunkt; Plural: les mi-temps", bsp: "À la mi-temps, notre équipe menait deux à zéro." },
+  { de: "Ins bett gebracht", fr: "mis au lit", note: "Verb: mettre au lit / coucher (qn)", bsp: "J'ai mis les enfants au lit avant le dîner." },
+  { de: "Von interesse sein", fr: "présenter un intérêt", note: "auch: être intéressant / avoir de l'intérêt", bsp: "Cette proposition présente un réel intérêt pour nous." },
+  { de: "Zugeben", fr: "avouer / admettre", note: "Verb; reconnaître (etw. anerkennen)", bsp: "Il a fini par avouer qu'il s'était trompé." },
+  { de: "Mittagspause", fr: "la pause déjeuner", note: "auch: la pause de midi", bsp: "Pendant la pause déjeuner, je me promène dans le parc." },
+  { de: "Erleichterung", fr: "le soulagement", note: "Verb: soulager", bsp: "Quel soulagement de savoir que tout va bien !" },
+  { de: "Gefüllt", fr: "rempli", note: "bei Speisen: farci (gefüllt/gestopft)", bsp: "Le verre est rempli d'eau fraîche." },
+  { de: "Beissen", fr: "mordre", note: "Verb; croquer (in etwas beißen, knabbern)", bsp: "Attention, ce chien peut mordre les inconnus." },
+  { de: "Sich wundern", fr: "s'étonner", note: "auch: être étonné, se demander", bsp: "Je m'étonne qu'il ne soit pas encore arrivé." },
+  { de: "Kämpfen", fr: "se battre / lutter", note: "combattre (bekämpfen)", bsp: "Il faut se battre pour réaliser ses rêves." },
+  { de: "Leimsamen", fr: "la graine de lin", note: "vermutlich Tippfehler für Leinsamen", bsp: "J'ajoute des graines de lin dans mon yaourt le matin." },
+  { de: "Samen", fr: "la graine", note: "Pflanze: la graine/la semence; biologisch: le sperme", bsp: "Chaque graine peut devenir une grande plante." },
   // === VOKABELN-END ===
 ];
 </script>
@@ -406,6 +418,7 @@ const VOKABELN = [
         <div class="lang" id="backLang">Französisch</div>
         <div class="word" id="backWord"></div>
         <div class="note" id="backNote"></div>
+        <div class="example" id="backExample"></div>
       </div>
     </div>
   </div>
@@ -417,8 +430,9 @@ const VOKABELN = [
 
   <div class="done-msg" id="doneMsg" style="display:none;">
     <div class="big">✓</div>
-    <h2>Alles erledigt für heute</h2>
+    <h2 id="doneTitle">Alles erledigt für heute</h2>
     <p id="doneSub"></p>
+    <button class="btn btn-good" id="btnMore" type="button" style="display:none;">Weiter üben</button>
   </div>
 </main>
 
@@ -433,6 +447,7 @@ const VOKABELN = [
 </main>
 
 <footer id="footPractice">
+  <button class="ctrl" id="btnSize">Umfang: Kurz (20)</button>
   <button class="ctrl" id="btnDir">Richtung: DE → FR</button>
   <button class="ctrl" id="btnReset">Zurücksetzen</button>
 </footer>
@@ -446,6 +461,13 @@ const VOKABELN = [
 const BOX_COUNT = 5;
 const INTERVALS = [0, 1, 3, 7, 14]; // Index 0 = Box 1, ... Index 4 = Box 5
 const STORAGE_KEY = "vokabeltrainer_v1";
+const SIZE_KEY = "vokabeltrainer_size_v1";
+/* Übungsumfang pro Session: kurz / mittel / alles. Infinity = keine Begrenzung. */
+const SIZES = [
+  { label: "Kurz (20)",  n: 20 },
+  { label: "Mittel (50)", n: 50 },
+  { label: "Alle",        n: Infinity },
+];
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /* Eindeutiger Schlüssel pro Karte (unabhängig von Reihenfolge in der Liste) */
@@ -478,6 +500,7 @@ let currentIdx = null;       // aktueller Eintrag aus VOKABELN
 let reverse = false;         // false = DE->FR (Standard), true = FR->DE
 let flipped = false;
 let dueTotalAtStart = 0;
+let sizeIdx = loadSize();    // Index in SIZES = gewählter Übungsumfang
 
 function load(){
   try{
@@ -491,6 +514,17 @@ function save(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
 }
 
+/* Übungsumfang merken (überlebt App-Neustart) */
+function loadSize(){
+  try{
+    const i = parseInt(localStorage.getItem(SIZE_KEY), 10);
+    return (i >= 0 && i < SIZES.length) ? i : 0;   // Default: Kurz (20)
+  }catch(e){ return 0; }
+}
+function saveSize(){
+  try{ localStorage.setItem(SIZE_KEY, String(sizeIdx)); }catch(e){}
+}
+
 /* Für eine Vokabel den Fortschritt holen bzw. anlegen */
 function progFor(v){
   const k = cardKey(v);
@@ -499,12 +533,21 @@ function progFor(v){
 }
 
 /* ================= SESSION-AUFBAU ================= */
+/* Zählt alle aktuell fälligen Karten (unabhängig vom gewählten Umfang). */
+function dueCount(){
+  const today = todayNum();
+  return VOKABELN.filter(v => isDue(state[cardKey(v)], today)).length;
+}
+
 function buildSession(){
   const today = todayNum();
   session = [];
   VOKABELN.forEach((v, i) => {
     if(isDue(state[cardKey(v)], today)) session.push(i);
   });
+  // Auf den gewählten Umfang begrenzen (Rest bleibt fällig und kommt in der nächsten Runde).
+  const limit = SIZES[sizeIdx].n;
+  if(session.length > limit) session = session.slice(0, limit);
   dueTotalAtStart = session.length;
 }
 
@@ -542,10 +585,18 @@ function showCard(){
     el("cardWrap").style.display = "none";
     el("answers").style.display = "none";
     el("doneMsg").style.display = "block";
-    const learned = VOKABELN.length;
-    el("doneSub").textContent = dueTotalAtStart
-      ? `${dueTotalAtStart} Karte(n) wiederholt. Komm später wieder – die nächsten werden nach ihrem Intervall wieder fällig.`
-      : `Aktuell ist keine Karte fällig. Schau später noch einmal vorbei.`;
+    const rest = dueCount();   // was durch die Umfang-Begrenzung noch offen ist
+    if(rest > 0){
+      el("doneTitle").textContent = "Runde geschafft";
+      el("doneSub").textContent = `${dueTotalAtStart} Karte(n) geübt — es sind noch ${rest} fällig.`;
+      el("btnMore").style.display = "inline-block";
+    }else{
+      el("doneTitle").textContent = "Alles erledigt für heute";
+      el("doneSub").textContent = dueTotalAtStart
+        ? `${dueTotalAtStart} Karte(n) wiederholt. Komm später wieder – die nächsten werden nach ihrem Intervall wieder fällig.`
+        : `Aktuell ist keine Karte fällig. Schau später noch einmal vorbei.`;
+      el("btnMore").style.display = "none";
+    }
     renderStatus();
     return;
   }
@@ -564,6 +615,8 @@ function showCard(){
   el("backWord").textContent  = frontIsDE ? v.fr : v.de;
   el("backNote").textContent  = v.note || "";
   el("backNote").style.display = v.note ? "block" : "none";
+  el("backExample").textContent  = v.bsp ? "« " + v.bsp + " »" : "";
+  el("backExample").style.display = v.bsp ? "block" : "none";
 
   renderStatus();
 }
@@ -592,6 +645,25 @@ function answer(gewusst){
 el("card").addEventListener("click", flip);
 el("btnGood").addEventListener("click", e => { e.stopPropagation(); answer(true); });
 el("btnBad").addEventListener("click",  e => { e.stopPropagation(); answer(false); });
+
+/* Übungsumfang durchschalten: Kurz (20) → Mittel (50) → Alle → … */
+function renderSizeLabel(){
+  el("btnSize").textContent = "Umfang: " + SIZES[sizeIdx].label;
+  el("btnSize").classList.toggle("active", SIZES[sizeIdx].n !== Infinity);
+}
+el("btnSize").addEventListener("click", () => {
+  sizeIdx = (sizeIdx + 1) % SIZES.length;
+  saveSize();
+  renderSizeLabel();
+  buildSession();
+  showCard();
+});
+
+/* Nächste Runde starten, wenn der Umfang begrenzt war */
+el("btnMore").addEventListener("click", () => {
+  buildSession();
+  showCard();
+});
 
 el("btnDir").addEventListener("click", () => {
   reverse = !reverse;
@@ -665,6 +737,7 @@ async function sendVocab(){
 el("btnSend").addEventListener("click", sendVocab);
 
 /* ================= START ================= */
+renderSizeLabel();
 buildSession();
 showCard();
 

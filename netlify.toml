@@ -4,3 +4,17 @@
   publish = "."
   command = ""
   functions = "netlify/functions"
+
+# Die App-Datei (index.html) NIE hart cachen: iPhone-Home-Screen-Apps halten sonst
+# hartnäckig die alte Fassung fest → neue Vokabeln erscheinen nicht. "must-revalidate"
+# zwingt das Handy, bei jedem Öffnen kurz beim Server nachzufragen "gibt's was Neues?".
+# Unverändert = 304 (blitzschnell, aus dem Cache). Verändert = frische Fassung.
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
