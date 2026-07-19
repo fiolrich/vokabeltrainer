@@ -8,3 +8,5 @@ Ifs
 Wunde
 Verwundet
 Traumatisiert
+Führen
+Zurückliegen
