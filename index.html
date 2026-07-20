@@ -349,6 +349,28 @@
     line-height:1.4;
     margin:0;
   }
+  /* Anzeige: wie viele Wörter noch auf den Nachtlauf warten */
+  .pending{
+    display:none;
+    background:var(--yellow);
+    border:var(--border) solid #000;
+    box-shadow:var(--shadow);
+    padding:12px 14px;
+    font-size:14px;
+    font-weight:800;
+    line-height:1.4;
+    color:#000;
+  }
+  .pending.show{display:block;}
+  .pending.stale{background:var(--pink);}
+  .pending .n{
+    font-size:20px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    display:block;
+    margin-bottom:2px;
+  }
 
   /* Landscape: kompakter */
   @media (orientation:landscape) and (max-height:520px){
@@ -460,6 +482,7 @@ const VOKABELN = [
 
 <main id="viewAdd" style="display:none;">
   <div class="add-wrap">
+    <div class="pending" id="pending"></div>
     <label class="add-label" for="addInput">Neue Vokabeln — eine deutsche Vokabel pro Zeile</label>
     <textarea id="addInput" class="add-input" rows="8" placeholder="z.B.&#10;Gruseln&#10;Schiedsrichter&#10;Produktionsfirma"></textarea>
     <button class="btn btn-send" id="btnSend" type="button">Senden</button>
@@ -717,7 +740,7 @@ function setView(v){
   el("tabAdd").classList.toggle("active", !practice);
 }
 el("tabPractice").addEventListener("click", () => setView("practice"));
-el("tabAdd").addEventListener("click",      () => setView("add"));
+el("tabAdd").addEventListener("click",      () => { setView("add"); loadPending(); });
 
 /* ================= VOKABELN SENDEN (an Netlify-Function) ================= */
 const ADD_VOCAB_URL = "/.netlify/functions/add-vocab";
@@ -749,6 +772,8 @@ async function sendVocab(){
       ? "1 Vokabel gesendet — wird heute Abend übersetzt."
       : lines.length + " Vokabeln gesendet — werden heute Abend übersetzt.";
     el("addInput").value = "";
+    lines.forEach(w => justSent.add(w));
+    loadPending();
   }catch(err){
     msg.className = "add-msg err";
     msg.textContent = "Fehler beim Senden: " + err.message + ". Bitte später erneut versuchen.";
@@ -758,10 +783,76 @@ async function sendVocab(){
 }
 el("btnSend").addEventListener("click", sendVocab);
 
+/* ================= WARTESCHLANGE ANZEIGEN =================
+   Liest inbox.txt + verarbeitet.txt von der ausgelieferten Seite und zeigt,
+   wie viele Wörter noch auf den Nachtlauf warten. Läuft der Nachtlauf nicht,
+   staut es sich hier sichtbar, statt still im Repo zu versanden.
+   Rein informativ — schlägt fehl geräuschlos (z.B. offline). */
+/* Gerade abgeschickte Wörter. Die Seite wird erst nach dem nächsten Netlify-Deploy
+   neu ausgeliefert, bis dahin fehlen sie in inbox.txt — deshalb hier mitzählen.
+   Sobald sie im ausgelieferten inbox.txt auftauchen, greift die Dedupe unten. */
+const justSent = new Set();
+
+function dayNumFromISO(iso){
+  const p = iso.split("-").map(Number);
+  return Math.floor(new Date(p[0], p[1]-1, p[2]).getTime() / MS_PER_DAY);
+}
+
+async function loadPending(){
+  const box = el("pending");
+  try{
+    const bust = "?t=" + Date.now();
+    const [inbRes, logRes] = await Promise.all([
+      fetch("/inbox.txt" + bust,       { cache: "no-store" }),
+      fetch("/verarbeitet.txt" + bust, { cache: "no-store" })
+    ]);
+    if(!inbRes.ok) return;
+    const waiting = (await inbRes.text()).split("\n")
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && s.charAt(0) !== "#");
+
+    /* Soeben Gesendetes dazuzählen, solange es noch nicht ausgeliefert wird */
+    const seen = new Set(waiting.map(s => s.toLowerCase()));
+    justSent.forEach(w => { if(!seen.has(w.toLowerCase())){ seen.add(w.toLowerCase()); waiting.push(w); } });
+
+    if(waiting.length === 0){ box.className = "pending"; box.textContent = ""; return; }
+
+    /* Letztes Verarbeitungsdatum aus dem Log ziehen: "# 2026-07-20 — n Vokabel(n) …" */
+    let daysSince = null;
+    if(logRes.ok){
+      const hits = (await logRes.text()).match(/#\s*(\d{4}-\d{2}-\d{2})/g);
+      if(hits && hits.length){
+        const last = hits[hits.length - 1].replace(/[^\d-]/g, "");
+        daysSince = todayNum() - dayNumFromISO(last);
+      }
+    }
+
+    const n = waiting.length;
+    const wort = n === 1 ? "Wort wartet" : "Wörter warten";
+    let text = n + " " + wort + " auf Übersetzung.";
+    /* Mehr als eine Nacht her und immer noch nichts passiert => hängt vermutlich. */
+    const stuck = daysSince !== null && daysSince > 1;
+    text += stuck
+      ? " Der Nachtlauf war zuletzt vor " + daysSince + " Tagen dran — da hakt vermutlich was."
+      : " Kommt heute Abend dran.";
+
+    box.className = "pending show" + (stuck ? " stale" : "");
+    box.innerHTML = "";
+    const strong = document.createElement("span");
+    strong.className = "n";
+    strong.textContent = stuck ? "⚠ Stau in der Warteschlange" : "In der Warteschlange";
+    const p = document.createElement("span");
+    p.textContent = text;
+    box.appendChild(strong);
+    box.appendChild(p);
+  }catch(e){ /* offline o.ä. — Anzeige bleibt einfach weg */ }
+}
+
 /* ================= START ================= */
 renderSizeLabel();
 buildSession();
 showCard();
+loadPending();
 
 /* Für automatisierte Tests im Headless-Modus zugänglich machen */
 if(typeof window !== "undefined"){

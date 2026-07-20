@@ -18,3 +18,15 @@
   for = "/index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Die App liest diese beiden Dateien live aus, um anzuzeigen, wie viele Wörter noch
+# auf den Nachtlauf warten. Gecacht wären die Zahlen falsch — also auch hier revalidieren.
+[[headers]]
+  for = "/inbox.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/verarbeitet.txt"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
