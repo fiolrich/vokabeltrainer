@@ -1,3 +1,4 @@
 # Hier deutsche Vokabeln eintragen, eine pro Zeile.
 # Wird jeden Abend um 21:00 Uhr automatisch übersetzt und in die App eingespielt.
 # Zeilen, die mit # beginnen, werden ignoriert. Leerzeilen sind ok.
+Schnürsenkel
