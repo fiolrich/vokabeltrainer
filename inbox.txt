@@ -1,25 +1,3 @@
 # Hier deutsche Vokabeln eintragen, eine pro Zeile.
 # Wird jeden Abend um 21:00 Uhr automatisch übersetzt und in die App eingespielt.
 # Zeilen, die mit # beginnen, werden ignoriert. Leerzeilen sind ok.
-Wären wir damals nicht…
-Sozialisiert werden
-Adhs
-Ifs
-Wunde
-Verwundet
-Traumatisiert
-Führen
-Zurückliegen
-Schlechte laune
-Eine schwalbe
-Konstant
-Offensichtlich
-Offenbar
-Hintern
-Pospalte
-Pobscken
-Kissen
-Möglicherweise
-Möglichst
-Erdrückend
-Leitungswasser
