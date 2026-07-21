@@ -44,3 +44,6 @@ Leitungswasser
 # 2026-07-21 — 2 Vokabel(n) eingespielt
 Schnürsenkel
 Wanderung
+
+# 2026-07-21 — 1 Vokabel(n) eingespielt
+Kaffeetasse
