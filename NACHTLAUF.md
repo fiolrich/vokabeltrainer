@@ -125,18 +125,33 @@ die Routine als Umgebungsvariable **`GH_TOKEN`** mitgibt.
 aus der Umgebung. Schreibe ihn niemals in eine Datei, in `.git/config`, in einen
 Commit oder in deine Schlussmeldung.
 
+**Immer auf `main` pushen — mit `HEAD:main`.** Die Cloud-Umgebung checkt das Repo auf
+einem eigenen Arbeitsbranch aus (`claude/…`). Ein schlichtes `git push origin main`
+landet dann auf diesem Branch, **nicht** auf `main` — und Netlify baut nur aus `main`.
+Die Vokabeln erscheinen dann nie in der App, obwohl der Lauf „erfolgreich" aussah.
+(Genau das ist am 21.07. passiert.) Deshalb zwingend `HEAD:main`:
+
 ```
 cat > /tmp/ask.sh <<'EOF'
 #!/bin/sh
 case "$1" in Username*) echo "x-access-token";; Password*) echo "$GH_TOKEN";; esac
 EOF
 chmod +x /tmp/ask.sh
-GIT_ASKPASS=/tmp/ask.sh GIT_TERMINAL_PROMPT=0 git push origin main
+GIT_ASKPASS=/tmp/ask.sh GIT_TERMINAL_PROMPT=0 git push origin HEAD:main
 rm -f /tmp/ask.sh
 ```
 
-Ist `GH_TOKEN` leer oder nicht gesetzt, versuche ein normales `git push origin main` —
+Ist `GH_TOKEN` leer oder nicht gesetzt, versuche ein normales `git push origin HEAD:main` —
 und melde deutlich, dass der Token fehlt.
+
+**Kontrolliere danach, dass es wirklich auf `main` gelandet ist:**
+
+```
+git ls-remote origin refs/heads/main
+```
+
+Der Hash muss dem deines Commits entsprechen (`git rev-parse HEAD`). Stimmt er nicht
+überein, ist der Push ins Leere gegangen — dann melde das deutlich.
 
 **Wenn der Push trotzdem scheitert**: brich nicht still ab. Melde deutlich, dass der Push
 fehlgeschlagen ist, und gib die eingespielten Karten im Klartext in der Schlussmeldung
