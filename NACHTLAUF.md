@@ -113,12 +113,35 @@ Inbox — aber nur, wenn `git status --porcelain` etwas zeigt.
 ```
 git add -A
 git -c commit.gpgsign=false commit -m "Nachtlauf: Vokabeln übersetzt und eingespielt ($(date +%F))"
-git push origin main
 ```
 
-**Wenn der Push an fehlender Berechtigung scheitert**: brich nicht still ab. Melde
-deutlich, dass der Push fehlgeschlagen ist, und gib die eingespielten Karten im Klartext
-in der Schlussmeldung aus, damit nichts verloren geht.
+### Push mit Token
+
+Der Cloud-Agent hat aus sich heraus **nur Lesezugriff** aufs Repo — ein normales
+`git push` scheitert mit **HTTP 403**. Der Push braucht deshalb den GitHub-Token, den
+die Routine als Umgebungsvariable **`GH_TOKEN`** mitgibt.
+
+**Der Token steht bewusst NICHT in dieser Datei** (sie liegt im Repo). Er kommt allein
+aus der Umgebung. Schreibe ihn niemals in eine Datei, in `.git/config`, in einen
+Commit oder in deine Schlussmeldung.
+
+```
+cat > /tmp/ask.sh <<'EOF'
+#!/bin/sh
+case "$1" in Username*) echo "x-access-token";; Password*) echo "$GH_TOKEN";; esac
+EOF
+chmod +x /tmp/ask.sh
+GIT_ASKPASS=/tmp/ask.sh GIT_TERMINAL_PROMPT=0 git push origin main
+rm -f /tmp/ask.sh
+```
+
+Ist `GH_TOKEN` leer oder nicht gesetzt, versuche ein normales `git push origin main` —
+und melde deutlich, dass der Token fehlt.
+
+**Wenn der Push trotzdem scheitert**: brich nicht still ab. Melde deutlich, dass der Push
+fehlgeschlagen ist, und gib die eingespielten Karten im Klartext in der Schlussmeldung
+aus, damit nichts verloren geht. Lass `inbox.txt` in dem Fall unangetastet im Repo —
+die Wörter bleiben dann in der Warteschlange und der nächste Lauf holt sie nach.
 
 ## 6) Meldung
 
