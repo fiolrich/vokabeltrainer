@@ -13,3 +13,6 @@ Wasserschaden
 Verhalten
 Sich Verhalten
 Schornstein
+Löschen (brand)
+Löschen (datei)
+Löschen (durst)
