@@ -233,6 +233,84 @@
     box-shadow:0 0 0 #000;
   }
   .ctrl.active{background:var(--pink);color:#000;}
+  /* Freie Runde: hebt sich von den anderen Fußleisten-Knöpfen ab */
+  .ctrl.ctrl-start{background:var(--yellow);}
+
+  /* ---- Dialog „Freie Runde" ---- */
+  .overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:50;
+    padding:20px;
+    overflow-y:auto;
+  }
+  .overlay.show{display:flex;align-items:center;justify-content:center;}
+  .dialog{
+    background:var(--bg);
+    border:var(--border) solid #000;
+    box-shadow:var(--shadow-lg);
+    padding:24px 22px;
+    width:100%;
+    max-width:420px;
+  }
+  .dialog h2{
+    margin:0 0 6px;
+    font-size:22px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+  }
+  .dialog p{
+    margin:0 0 18px;
+    font-size:14px;
+    font-weight:700;
+    line-height:1.45;
+  }
+  .size-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .size-btn{
+    background:var(--cyan);
+    border:var(--border) solid #000;
+    box-shadow:var(--shadow);
+    padding:18px 10px;
+    font-family:inherit;
+    font-size:20px;
+    font-weight:900;
+    color:#000;
+    cursor:pointer;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+    transition:transform .06s ease, box-shadow .06s ease;
+  }
+  .size-btn .sub{
+    display:block;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:.3px;
+    margin-top:3px;
+  }
+  .size-btn:active{transform:translate(3px,3px);box-shadow:3px 3px 0 #000;}
+  .dialog-cancel{
+    width:100%;
+    background:#fff;
+    border:var(--border) solid #000;
+    box-shadow:var(--shadow);
+    padding:13px;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:#000;
+    cursor:pointer;
+  }
+  .dialog-cancel:active{transform:translate(3px,3px);box-shadow:3px 3px 0 #000;}
 
   .boxes{
     display:flex;
@@ -436,9 +514,6 @@ const VOKABELN = [
     { de: "Schnürsenkel", fr: "le lacet", note: "meist im Plural: les lacets; m", bsp: "Attention, ton lacet est défait, tu vas tomber." },
   { de: "Wanderung", fr: "la randonnée", note: "f; Verb: faire une randonnée", bsp: "Dimanche, nous partons en randonnée dans les montagnes." },
     { de: "Kaffeetasse", fr: "la tasse à café", note: "la tasse = Tasse allgemein", bsp: "Chaque matin, je remplis ma tasse à café." },
-    { de: "Schlechtes Gewissen", fr: "la mauvaise conscience", note: "oft: avoir mauvaise conscience = ein schlechtes Gewissen haben", bsp: "J'ai mauvaise conscience d'avoir oublié son anniversaire." },
-  { de: "Hätte dich gern sehen wollen", fr: "J'aurais bien aimé te voir", note: "Konditional der Vergangenheit; wörtl. 'ich hätte dich gern gesehen'", bsp: "J'aurais bien aimé te voir avant ton départ." },
-  { de: "Fest", fr: "la fête", note: "das Fest (Feier); Adjektiv 'fest' = ferme/solide", bsp: "Nous avons organisé une grande fête pour son anniversaire." },
   // === VOKABELN-END ===
 ];
 </script>
@@ -497,7 +572,17 @@ const VOKABELN = [
   </div>
 </main>
 
+<div class="overlay" id="startOverlay">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+    <h2 id="startTitle">Freie Runde</h2>
+    <p id="startSub">Wie viele Vokabeln willst du üben? Sie werden zufällig aus allen Karten zusammengestellt — egal ob sie heute fällig wären.</p>
+    <div class="size-grid" id="startGrid"></div>
+    <button class="dialog-cancel" id="startCancel" type="button">Abbrechen</button>
+  </div>
+</div>
+
 <footer id="footPractice">
+  <button class="ctrl ctrl-start" id="btnFree">▶ Freie Runde</button>
   <button class="ctrl" id="btnSize">Umfang: Kurz (20)</button>
   <button class="ctrl" id="btnDir">Richtung: DE → FR</button>
   <button class="ctrl" id="btnReset">Zurücksetzen</button>
@@ -552,6 +637,10 @@ let reverse = false;         // false = DE->FR (Standard), true = FR->DE
 let flipped = false;
 let dueTotalAtStart = 0;
 let sizeIdx = loadSize();    // Index in SIZES = gewählter Übungsumfang
+let freeMode = false;        // true = selbst gestartete freie Runde (zufällig aus allen Karten)
+
+/* Auswahlgrößen im „Freie Runde"-Dialog. Infinity = alle Karten. */
+const FREE_SIZES = [20, 40, 60, Infinity];
 
 function load(){
   try{
@@ -592,6 +681,7 @@ function dueCount(){
 
 function buildSession(){
   const today = todayNum();
+  freeMode = false;
   session = [];
   VOKABELN.forEach((v, i) => {
     if(isDue(state[cardKey(v)], today)) session.push(i);
@@ -599,6 +689,29 @@ function buildSession(){
   // Auf den gewählten Umfang begrenzen (Rest bleibt fällig und kommt in der nächsten Runde).
   const limit = SIZES[sizeIdx].n;
   if(session.length > limit) session = session.slice(0, limit);
+  dueTotalAtStart = session.length;
+}
+
+/* ---- Freie Runde: zufällige Auswahl aus ALLEN Karten ---- */
+
+/* Fisher-Yates: mischt eine Kopie, lässt das Original in Ruhe */
+function shuffled(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+/* Baut eine Runde aus n zufälligen Karten (n = Infinity → alle).
+   Fälligkeit spielt hier keine Rolle — das ist der Sinn der freien Runde.
+   Der Lernfortschritt wird trotzdem ganz normal fortgeschrieben. */
+function buildFreeSession(n){
+  freeMode = true;
+  const all = VOKABELN.map((v, i) => i);
+  session = shuffled(all);
+  if(session.length > n) session = session.slice(0, n);
   dueTotalAtStart = session.length;
 }
 
@@ -619,8 +732,9 @@ const el = id => document.getElementById(id);
 function renderStatus(){
   const remaining = session.length;
   const total = VOKABELN.length;
-  el("status").textContent =
-    `${remaining} von ${total} fällig` + (dueTotalAtStart ? `  ·  heute noch ${remaining}` : "");
+  el("status").textContent = freeMode
+    ? `Freie Runde  ·  noch ${remaining} von ${dueTotalAtStart}`
+    : `${remaining} von ${total} fällig` + (dueTotalAtStart ? `  ·  heute noch ${remaining}` : "");
   const counts = boxCounts();
   el("boxes").innerHTML = counts
     .map((c,i)=>`<span class="boxchip">Box ${i+1}: ${c}</span>`)
@@ -637,16 +751,28 @@ function showCard(){
     el("answers").style.display = "none";
     el("doneMsg").style.display = "block";
     const rest = dueCount();   // was durch die Umfang-Begrenzung noch offen ist
-    if(rest > 0){
+    if(freeMode){
+      el("doneTitle").textContent = "Runde geschafft";
+      el("doneSub").textContent = `${dueTotalAtStart} Karte(n) geübt.`
+        + (rest > 0 ? ` Regulär fällig sind gerade ${rest}.` : " Regulär ist gerade nichts fällig.");
+      el("btnMore").textContent = "Noch eine Runde";
+      el("btnMore").dataset.action = "free";
+      el("btnMore").style.display = "inline-block";
+    }else if(rest > 0){
       el("doneTitle").textContent = "Runde geschafft";
       el("doneSub").textContent = `${dueTotalAtStart} Karte(n) geübt — es sind noch ${rest} fällig.`;
+      el("btnMore").textContent = "Weiter üben";
+      el("btnMore").dataset.action = "continue";
       el("btnMore").style.display = "inline-block";
     }else{
       el("doneTitle").textContent = "Alles erledigt für heute";
       el("doneSub").textContent = dueTotalAtStart
         ? `${dueTotalAtStart} Karte(n) wiederholt. Komm später wieder – die nächsten werden nach ihrem Intervall wieder fällig.`
         : `Aktuell ist keine Karte fällig. Schau später noch einmal vorbei.`;
-      el("btnMore").style.display = "none";
+      // Lust auf mehr? Dann trotzdem üben können — das ist der Sinn der freien Runde.
+      el("btnMore").textContent = "Trotzdem üben";
+      el("btnMore").dataset.action = "free";
+      el("btnMore").style.display = "inline-block";
     }
     renderStatus();
     return;
@@ -710,10 +836,63 @@ el("btnSize").addEventListener("click", () => {
   showCard();
 });
 
-/* Nächste Runde starten, wenn der Umfang begrenzt war */
+/* Nächste Runde starten — je nach Kontext regulär weiter oder freie Runde */
 el("btnMore").addEventListener("click", () => {
+  if(el("btnMore").dataset.action === "free"){ openStartDialog(); return; }
   buildSession();
   showCard();
+});
+
+/* ================= FREIE RUNDE: DIALOG ================= */
+function openStartDialog(){
+  const total = VOKABELN.length;
+  const grid = el("startGrid");
+  grid.innerHTML = "";
+
+  // Nur Größen anbieten, die kleiner als der Bestand sind — alles darüber wäre
+  // ohnehin dasselbe wie „Alle" und würde nur verwirren.
+  const options = FREE_SIZES.filter(n => n < total);
+  options.push(Infinity);
+
+  options.forEach(n => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "size-btn";
+    if(n === Infinity){
+      b.innerHTML = 'Alle<span class="sub">' + total + " Karten</span>";
+    }else{
+      b.innerHTML = n + '<span class="sub">Vokabeln</span>';
+    }
+    b.addEventListener("click", () => {
+      closeStartDialog();
+      buildFreeSession(n);
+      el("cardWrap").style.display = "block";
+      el("answers").style.display = "grid";
+      showCard();
+    });
+    grid.appendChild(b);
+  });
+
+  el("startSub").textContent = total === 1
+    ? "Du hast erst eine Karte — viel Auswahl gibt es noch nicht."
+    : "Wie viele Vokabeln willst du üben? Sie werden zufällig aus allen "
+      + total + " Karten zusammengestellt — egal ob sie heute fällig wären.";
+
+  el("startOverlay").classList.add("show");
+}
+
+function closeStartDialog(){
+  el("startOverlay").classList.remove("show");
+}
+
+el("btnFree").addEventListener("click", openStartDialog);
+el("startCancel").addEventListener("click", closeStartDialog);
+/* Klick auf den dunklen Rand schließt — aber nicht, wenn im Dialog selbst geklickt wird */
+el("startOverlay").addEventListener("click", (e) => {
+  if(e.target === el("startOverlay")) closeStartDialog();
+});
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape") closeStartDialog();
 });
 
 el("btnDir").addEventListener("click", () => {
@@ -862,7 +1041,9 @@ loadPending();
 
 /* Für automatisierte Tests im Headless-Modus zugänglich machen */
 if(typeof window !== "undefined"){
-  window.__vt = { nextBox, isDue, todayNum, INTERVALS, BOX_COUNT, cardKey };
+  window.__vt = { nextBox, isDue, todayNum, INTERVALS, BOX_COUNT, cardKey,
+                  shuffled, buildFreeSession, openStartDialog, closeStartDialog,
+                  FREE_SIZES, getSession: () => session, isFreeMode: () => freeMode };
 }
 </script>
 </body>
