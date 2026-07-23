@@ -16,3 +16,5 @@ Schornstein
 Löschen (brand)
 Löschen (datei)
 Löschen (durst)
+Gierig
+Kaution
