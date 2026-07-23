@@ -1,22 +1,3 @@
 # Hier deutsche Vokabeln eintragen, eine pro Zeile.
 # Wird jeden Abend um 21:00 Uhr automatisch übersetzt und in die App eingespielt.
 # Zeilen, die mit # beginnen, werden ignoriert. Leerzeilen sind ok.
-Bühne
-Ertrinken
-Schwesternschaft
-Bubble (im sinne von: bezugsgruppe)
-Scham
-Beschämen
-Einkommen
-Abfluss
-Wasserschaden
-Verhalten
-Sich Verhalten
-Schornstein
-Löschen (brand)
-Löschen (datei)
-Löschen (durst)
-Gierig
-Kaution
-Inhalt
-Betrunken
