@@ -15,3 +15,4 @@ Zange
 Locker
 Lose
 Festmachen
+Haken
